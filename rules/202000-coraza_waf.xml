@@ -1,0 +1,236 @@
+<group name="coraza, waf, web_attack,">
+	<!-- ======================================================= -->
+	<!-- 1. REGRA BASE (PARENT)                                  -->
+	<!-- ======================================================= -->
+	<rule id="202000" level="3">
+		<decoded_as>json</decoded_as>
+		<match>Coraza:</match>
+		<description>Coraza WAF: Evento de inspeção coletado</description>
+		<group>waf,pci_dss_6.5,</group>
+	</rule>
+	<!-- ======================================================= -->
+	<!-- 2. REGRAS POR POLÍTICA OWASP CRS & MITRE ATT&CK         -->
+	<!-- ======================================================= -->
+	<!-- [REQUEST-911] Enforce de Método HTTP -->
+	<rule id="202001" level="6">
+		<if_sid>202000</if_sid>
+		<id>^911</id>
+		<description>Coraza WAF: Método HTTP não permitido pela política [Regra $(id): $(msg)] vindo de $(srcip)</description>
+		<mitre>
+			<id>T1071.001</id>
+		</mitre>
+		<group>waf,policy_violation,</group>
+	</rule>
+	<!-- [REQUEST-913] Detecção de Scanners e Ferramentas Automatizadas -->
+	<rule id="202002" level="10">
+		<if_sid>202000</if_sid>
+		<id>^913|^900001$</id>
+		<description>Coraza WAF: Scanner/Bot de Segurança Detectado por User-Agent [Regra $(id): $(msg)] vindo de $(srcip)</description>
+		<mitre>
+			<id>T1595.002</id>
+		</mitre>
+		<group>waf,scanner,</group>
+	</rule>
+	<!-- [REQUEST-920.350] Host Header é IP Numérico Direto -->
+	<rule id="202003" level="6">
+		<if_sid>202000</if_sid>
+		<id>^920350$</id>
+		<description>Coraza WAF: Varredura de IP Direto (Host Header é IP numérico) vindo de $(srcip)</description>
+		<mitre>
+			<id>T1595.002</id>
+		</mitre>
+		<group>waf,reconnaissance,</group>
+	</rule>
+	<!-- [REQUEST-920.440] Acesso a Extensão/Arquivo Restrito (.key, .env, .git, .bak) -->
+	<rule id="202004" level="11">
+		<if_sid>202000</if_sid>
+		<id>^920440$|^92045</id>
+		<description>Coraza WAF: Tentativa de acesso a arquivo sensível/chave restrita [$(data)] vindo de $(srcip)</description>
+		<mitre>
+			<id>T1083</id>
+			<id>T1552</id>
+		</mitre>
+		<group>waf,information_disclosure,reconnaissance,</group>
+	</rule>
+	<!-- [REQUEST-920.270/271] Caracteres Inválidos / Não-Imprimíveis / Null Bytes -->
+	<rule id="202005" level="8">
+		<if_sid>202000</if_sid>
+		<id>^920270$|^920271$|^920230$</id>
+		<description>Coraza WAF: Caracteres inválidos ou encoding anômalo na requisição [Regra $(id): $(msg)] vindo de $(srcip)</description>
+		<mitre>
+			<id>T1027</id>
+			<id>T1190</id>
+		</mitre>
+		<group>waf,protocol_violation,</group>
+	</rule>
+	<!-- [REQUEST-920 Generic] Violação Geral de Protocolo HTTP -->
+	<rule id="202006" level="7">
+		<if_sid>202000</if_sid>
+		<id>^920</id>
+		<description>Coraza WAF: Violação de Protocolo HTTP [Regra $(id): $(msg)] vindo de $(srcip)</description>
+		<mitre>
+			<id>T1190</id>
+		</mitre>
+		<group>waf,protocol_violation,</group>
+	</rule>
+	<!-- [REQUEST-921] Protocol Attack (Header Injection / Request Smuggling) -->
+	<rule id="202007" level="11">
+		<if_sid>202000</if_sid>
+		<id>^921|^922</id>
+		<description>Coraza WAF: Ataque de Protocolo HTTP / Multipart Bypass [Regra $(id): $(msg)] vindo de $(srcip)</description>
+		<mitre>
+			<id>T1190</id>
+		</mitre>
+		<group>waf,protocol_attack,</group>
+	</rule>
+	<!-- [REQUEST-930] LFI / Directory Traversal -->
+	<rule id="202010" level="12">
+		<if_sid>202000</if_sid>
+		<id>^930</id>
+		<description>Coraza WAF: Tentativa de Local File Inclusion (LFI) / Path Traversal [Regra $(id): $(msg)] vindo de $(srcip)</description>
+		<mitre>
+			<id>T1083</id>
+			<id>T1005</id>
+		</mitre>
+		<group>waf,lfi,web_attack,pci_dss_6.5.8,</group>
+	</rule>
+	<!-- [REQUEST-931] RFI (Remote File Inclusion) -->
+	<rule id="202011" level="12">
+		<if_sid>202000</if_sid>
+		<id>^931</id>
+		<description>Coraza WAF: Tentativa de Remote File Inclusion (RFI) [Regra $(id): $(msg)] vindo de $(srcip)</description>
+		<mitre>
+			<id>T1055</id>
+			<id>T1190</id>
+		</mitre>
+		<group>waf,rfi,web_attack,pci_dss_6.5.8,</group>
+	</rule>
+	<!-- [REQUEST-932] RCE / Command Injection (Crítico) -->
+	<rule id="202012" level="13">
+		<if_sid>202000</if_sid>
+		<id>^932</id>
+		<description>Coraza WAF: Tentativa de RCE (Command Injection) Detectada [Regra $(id): $(msg)] vindo de $(srcip)</description>
+		<mitre>
+			<id>T1059</id>
+			<id>T1059.004</id>
+		</mitre>
+		<group>waf,rce,web_attack,pci_dss_6.5.2,</group>
+	</rule>
+	<!-- [REQUEST-933] Injeção de Código PHP -->
+	<rule id="202013" level="12">
+		<if_sid>202000</if_sid>
+		<id>^933</id>
+		<description>Coraza WAF: Tentativa de PHP Code Injection [Regra $(id): $(msg)] vindo de $(srcip)</description>
+		<mitre>
+			<id>T1059.006</id>
+			<id>T1190</id>
+		</mitre>
+		<group>waf,php_attack,web_attack,</group>
+	</rule>
+	<!-- [REQUEST-934] Ataques Genéricos a Aplicação (Node.js, SSTI) -->
+	<rule id="202014" level="12">
+		<if_sid>202000</if_sid>
+		<id>^934|^200002$</id>
+		<description>Coraza WAF: Ataque Genérico à Aplicação / Falha de Payload [Regra $(id): $(msg)] vindo de $(srcip)</description>
+		<mitre>
+			<id>T1190</id>
+		</mitre>
+		<group>waf,generic_attack,web_attack,</group>
+	</rule>
+	<!-- [REQUEST-941] XSS (Cross-Site Scripting) -->
+	<rule id="202015" level="11">
+		<if_sid>202000</if_sid>
+		<id>^941</id>
+		<description>Coraza WAF: Tentativa de Cross-Site Scripting (XSS) Detectada [Regra $(id): $(msg)] vindo de $(srcip)</description>
+		<mitre>
+			<id>T1189</id>
+		</mitre>
+		<group>waf,xss,web_attack,pci_dss_6.5.7,</group>
+	</rule>
+	<!-- [REQUEST-942] SQL Injection (Crítico) -->
+	<rule id="202016" level="12">
+		<if_sid>202000</if_sid>
+		<id>^942</id>
+		<description>Coraza WAF: Tentativa de SQL Injection Detectada [Regra $(id): $(msg)] vindo de $(srcip)</description>
+		<mitre>
+			<id>T1190</id>
+		</mitre>
+		<group>waf,sqli,web_attack,pci_dss_6.5.2,</group>
+	</rule>
+	<!-- [REQUEST-943] Session Fixation -->
+	<rule id="202017" level="10">
+		<if_sid>202000</if_sid>
+		<id>^943</id>
+		<description>Coraza WAF: Tentativa de Session Fixation / Manipulação de Sessão [Regra $(id): $(msg)] vindo de $(srcip)</description>
+		<mitre>
+			<id>T1539</id>
+		</mitre>
+		<group>waf,session_fixation,</group>
+	</rule>
+	<!-- [REQUEST-944] Ataques Java / Log4Shell / Desserialização -->
+	<rule id="202018" level="13">
+		<if_sid>202000</if_sid>
+		<id>^944</id>
+		<description>Coraza WAF: Tentativa de Ataque Java / Log4Shell / JNDI Injection [Regra $(id): $(msg)] vindo de $(srcip)</description>
+		<mitre>
+			<id>T1190</id>
+			<id>T1059</id>
+		</mitre>
+		<group>waf,java_attack,log4j,web_attack,</group>
+	</rule>
+	<!-- [REQUEST-949] Anomaly Score Exceeded (Score Total de Ataques Estourado) -->
+	<rule id="202019" level="12">
+		<if_sid>202000</if_sid>
+		<id>^949110$|^949111$|^949</id>
+		<description>Coraza WAF: Limite de Anomalia Estourado (Ataque Combinado/Múltiplo) [$(msg)] vindo de $(srcip)</description>
+		<mitre>
+			<id>T1190</id>
+		</mitre>
+		<group>waf,anomaly,web_attack,</group>
+	</rule>
+	<!-- [RESPONSE-950 a 954] Vazamento de Dados / Erros de Banco / Stack Trace -->
+	<rule id="202020" level="10">
+		<if_sid>202000</if_sid>
+		<id>^950|^951|^952|^953|^954</id>
+		<description>Coraza WAF: Vazamento de Informações Sensíveis / Stack Trace na Resposta HTTP [Regra $(id): $(msg)]</description>
+		<mitre>
+			<id>T1005</id>
+			<id>T1082</id>
+		</mitre>
+		<group>waf,data_leakage,information_disclosure,</group>
+	</rule>
+	<!-- [RESPONSE-955] Detecção de Web Shells na Resposta -->
+	<rule id="202021" level="14">
+		<if_sid>202000</if_sid>
+		<id>^955</id>
+		<description>ALERTA CRÍTICO CORAZA WAF: Presença de Web Shell Identificada na Resposta do Servidor! [Regra $(id)]</description>
+		<mitre>
+			<id>T1505.003</id>
+		</mitre>
+		<group>waf,webshell,critical_threat,</group>
+	</rule>
+	<!-- ======================================================= -->
+	<!-- 3. REGRAS DE CORRELAÇÃO STATEFUL POR IP                 -->
+	<!-- ======================================================= -->
+	<!-- 3.1 Scanner Massivo (≥ 6 violações em 60s do mesmo IP) -->
+	<rule id="202050" level="12" frequency="6" timeframe="60">
+		<if_matched_sid>202000</if_matched_sid>
+		<same_srcip/>
+		<description>ALERTA CORAZA WAF: Scanner Massivo Web! IP $(srcip) gerou mais de 6 violações de segurança em 60s</description>
+		<mitre>
+			<id>T1595</id>
+		</mitre>
+		<group>waf,scanner,correlation,</group>
+	</rule>
+	<!-- 3.2 Ataque Persistente / Força Bruta Web (≥ 12 violações em 120s) -->
+	<rule id="202051" level="14" frequency="12" timeframe="120">
+		<if_matched_sid>202000</if_matched_sid>
+		<same_srcip/>
+		<description>ALERTA CRÍTICO: Ataque Persistente ao WAF! IP $(srcip) atingiu 12 violações em 120s [Requer Bloqueio Automático]</description>
+		<mitre>
+			<id>T1110</id>
+			<id>T1190</id>
+		</mitre>
+		<group>waf,attack,persistent_threat,correlation,</group>
+	</rule>
+</group>

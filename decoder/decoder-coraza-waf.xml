@@ -1,0 +1,5 @@
+<decoder name="coraza-fields">
+    <parent>json</parent>
+    <regex type="pcre2" field="message">\[client \\"(\d+.\d+.\d+.\d+)\\"\] (Coraza): (.*?)\[file \\"(.*?)\\"\] \[line \\"\d+\\"\] \[id \\"(\d+)\\"\] \[rev \\"(.*?)\\"\] \[msg \\"(.*?)\\"\] \[data \\"(.*?)\\"\] \[severity \\"(.*?)\\"\] \[ver \\"(.*?)\\"\] \[maturity \\".*?\\"\] \[accuracy \\".*?\\"\] \[.*?\[hostname \\"(.*?)\\"\] \[uri \\"(.*?)\\"\] \[unique_id \\"(.*?)\\"\]</regex>
+    <order>srcip, program_name, alert, file, id, rev, msg, data, severity, ver, dstip, url, unique_id</order>
+</decoder>
