@@ -1,0 +1,35 @@
+<group name="windows,monitoramento,">
+
+  <rule id="801001" level="12">
+    <description>Folder Audit Permission - Object changed</description>
+    <options>no_full_log</options>
+    <field name="win.system.eventID">4670</field>
+  </rule>
+
+  <rule id="801002" level="15">
+    <if_sid>61102</if_sid>
+    <options>no_full_log</options>
+    <description>Error on Servers (Windows)</description>
+    <field name="win.system.computer" type="pcre2">(?i)WSR\-[0-9]{3}\-[0-9]{3}\-[0-9]{3}.*</field>
+  </rule>
+
+  <rule id="801003" level="15">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID">^4648$</field>
+
+    <!-- 1. Descarta chamadas originadas pela própria conta de máquina/SYSTEM -->
+    <field name="win.eventdata.subjectUserName" negate="yes">\$$</field>
+    <!-- 2. Descarta autenticações locais contra o localhost -->
+    <field name="win.eventdata.targetServerName" negate="yes">^localhost$|^127\.0\.0\.1$</field>
+    <!-- 3. Descarta serviços nativos do svchost -->
+    <field name="win.eventdata.processName" negate="yes">svchost\.exe$</field>
+
+    <description>Credenciais cruzadas por '$(win.eventdata.subjectUserName)' usando conta '$(win.eventdata.targetUserName)' com destino a '$(win.eventdata.targetServerName)'.</description>
+    <options>no_full_log</options>
+    <mitre>
+      <id>T1078</id>
+      <id>T1134</id>
+    </mitre>
+    <group>authentication_success,privileged_access,windows,</group>
+    </rule>
+</group>
