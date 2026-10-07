@@ -1,10 +1,12 @@
-rule "Alerta 4648 - Credenciais Explicitas com Contas Diferentes"
+ rule "Alerta 4648 - Credenciais Explicitas com Contas Diferentes"
     when
         to_string($message.rule_id) == "801003" AND
         has_field("data_win_eventdata_targetUserName") AND
         has_field("data_win_eventdata_subjectUserName") AND
         // Comparacao logica estrita:
-        lowercase(to_string($message.data_win_eventdata_subjectUserName)) == lowercase(to_string($message.data_win_eventdata_targetUserName))
+        //lowercase(to_string($message.data_win_eventdata_subjectUserName)) == lowercase(to_string($message.data_win_eventdata_targetUserName))
+        // Comparacao dos nomes (limpos de pontos e espacos)
+        regex_replace("[.\\s]+", lowercase(to_string($message.data_win_eventdata_subjectUserName)), "", true) != regex_replace("[.\\s]+", lowercase(to_string($message.data_win_eventdata_targetUserName)), "", true)
     then
         //set_field("rule_level", 15);
         //set_field("threat_intel_priority", "HIGH");
