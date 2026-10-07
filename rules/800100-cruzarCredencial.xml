@@ -23,6 +23,8 @@
     <field name="win.eventdata.targetServerName" negate="yes">^localhost$|^127\.0\.0\.1$</field>
     <!-- 3. Descarta serviços nativos do svchost -->
     <field name="win.eventdata.processName" negate="yes">svchost\.exe$</field>
+    <!-- 4. Descarta o autenticador do Microsoft 365 / Entra ID (Teams, Outlook, OneDrive) -->
+    <field name="win.eventdata.processName" negate="yes">Microsoft\.AAD\.BrokerPlugin\.exe$</field>
 
     <description>Credenciais cruzadas por '$(win.eventdata.subjectUserName)' usando conta '$(win.eventdata.targetUserName)' com destino a '$(win.eventdata.targetServerName)'.</description>
     <options>no_full_log</options>
