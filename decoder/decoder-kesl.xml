@@ -1,0 +1,46 @@
+<decoder name="kesl-json">
+  <prematch>kesl\[\d+\]: \{</prematch>
+  <plugin_decoder>JSON_Decoder</plugin_decoder>
+</decoder>
+
+<!-- /var/ossec/etc/rules/kaspersky_kesl_rules.xml -->
+<group name="kaspersky,kesl,intrusion_detected,">
+  <!-- Regra Base: Qualquer evento do KESL -->
+  <rule id="100500" level="3">
+    <decoded_as>kesl-json</decoded_as>
+    <description>Kaspersky KESL Evento Coletado</description>
+  </rule>
+
+  <!-- Regra Crítica: Detecção de Ataque de Rede ou Intrusion -->
+  <rule id="100501" level="12">
+    <if_sid>100500</if_sid>
+    <field name="EventType">NetworkAttackDetected</field>
+    <description>Kaspersky KESL: Ataque de Rede Detectado ($(DetectName)) vindo de $(HostName)</description>
+    <mitre>
+      <id>T1190</id>
+      <id>T1210</id>
+    </mitre>
+    <group>attack,pci_dss_11.4,</group>
+  </rule>
+
+  <!-- Regra Crítica: Ameaça com DangerLevel Critical -->
+  <rule id="100502" level="13">
+    <if_sid>100500</if_sid>
+    <field name="DangerLevel">Critical</field>
+    <description>Kaspersky KESL: Ameaça Crítica Detectada - $(DetectName)</description>
+    <group>malware,critical_threat,</group>
+  </rule>
+</group>
+
+
+<decoder name="coraza-waf-json">
+    <program_name>Coraza</program_name>
+    <prematch>^{.*?Coraza:</prematch>
+</decoder>
+
+<decoder name="coraza-waf-fields">
+    <parent>coraza-waf-json</parent>
+    <prematch>\[client "\d+.\d+.\d+.\d+"\]</prematch>
+    <regex>\[client "(\d+.\d+.\d+.\d+)"\]</regex>
+    <order>srcip</order>
+</decoder>
