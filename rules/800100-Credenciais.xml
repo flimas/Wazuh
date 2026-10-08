@@ -1,4 +1,4 @@
-<group name="windows,monitoramento,">
+ <group name="windows,monitoramento,">
 
       <rule id="801001" level="12">
         <description>Folder Audit Permission - Object changed</description>
@@ -13,21 +13,18 @@
         <field name="win.system.computer" type="pcre2">(?i)WSR\-[0-9]{3}\-[0-9]{3}\-[0-9]{3}.*</field>
       </rule>
 
-      <!-- 801003: Auditoria de Elevação de Privilégio (Quem chamou Quem) -->
+      <!-- 801003: Auditoria UAC / RunAs (QUEM solicitou a elevação e QUAL conta utilizou) -->
       <rule id="801003" level="5">
         <if_sid>60103</if_sid>
         <field name="win.system.eventID">^4648$</field>
 
-        <!-- Descarta contas de máquina e SYSTEM -->
+        <!-- Descarta chamadas de SYSTEM, contas de máquina ($) e tarefas agendadas em background -->
         <field name="win.eventdata.subjectUserSid" negate="yes">^S-1-5-18$</field>
         <field name="win.eventdata.subjectUserName" type="pcre2" negate="yes">.*?\$$</field>
-
-        <!-- Descarta serviços normais em background, mas PERMITE explicitamente o UAC (consent.exe) e runas -->
-        <!-- Se o processo for svchost.exe em localhost, descarta (tarefas agendadas locais de sistema) -->
         <field name="win.eventdata.processName" negate="yes">svchost\.exe$</field>
 
-        <!-- Conta alvo DEVE ser administrativa -->
-        <field name="win.eventdata.targetUserName" type="pcre2">(?i)^(?:adm\..+|[A|a]dministrator|[A|a]dministrador)$</field>
+        <!-- Conta alvo DEVE ser administrativa (adm.*, Administrator ou Desenvolvimento) -->
+        <field name="win.eventdata.targetUserName" type="pcre2">(?i)^(?:adm\..+|[A|a]dministrator|[A|a]dministrador|[D|d]esenvolvimento)$</field>
 
         <description>Auditoria UAC: Usuario '$(win.eventdata.subjectUserName)' solicitou elevacao para '$(win.eventdata.targetUserName)' via '$(win.eventdata.processName)' em '$(win.system.computer)'.</description>
         <options>no_full_log</options>
@@ -37,17 +34,17 @@
         </mitre>
         <group>authentication_success,privileged_access,elevation_audit,</group>
       </rule>
-      
+
       <!-- 801004: Suspeita de Compartilhamento de Credenciais (Event ID 4648) -->
       <rule id="801004" level="15">
         <if_sid>60103</if_sid>
         <field name="win.system.eventID">^4648$</field>
         <field name="win.eventdata.subjectUserSid" negate="yes">^S-1-5-18$</field>
         <field name="win.eventdata.subjectUserName" type="pcre2" negate="yes">.*?\$$</field>
-        <field name="win.eventdata.targetUserName" negate="yes">^[D|d]esenvolvimento</field>
         <field name="win.eventdata.targetServerName" negate="yes">^localhost$|^127\.0\.0\.1$</field>
         <field name="win.eventdata.processName" negate="yes">svchost\.exe$</field>
         <field name="win.eventdata.processName" negate="yes">(?i)Microsoft\.AAD\.BrokerPlugin\.exe$|taskhostw\.exe$</field>
+        <!-- Descarta quando o alvo for conta administrativa padrão (cai na 801003) -->
         <field name="win.eventdata.targetUserName" type="pcre2" negate="yes">(?i)^(?:adm\..+|[A|a]dministrator|[A|a]dministrador|[D|d]esenvolvimento)$</field>
         <description>ALERTA CRITICO: Suspeita de Compartilhamento de Credenciais - Usuario '$(win.eventdata.subjectUserName)' usando conta comum '$(win.eventdata.targetUserName)' com destino a '$(win.eventdata.targetServerName)'.
   </description>
@@ -58,13 +55,13 @@
         <group>authentication_success,account_sharing,security_incident,</group>
       </rule>
 
-      <!-- 801005 (NOVA): Elevação de Privilégio via Logon / Executar como Administrador (Event ID 4672) -->
+      <!-- 801005: Atribuição de Privilégios Administrativos / Logon com Superusuário (Event ID 4672) -->
       <rule id="801005" level="5">
         <if_sid>67028</if_sid>
-        <!-- Ignora contas nativas do sistema operacional que disparam 4672 o tempo todo -->
+        <!-- Descarta SYSTEM, Local Service, Network Service e contas de máquina -->
         <field name="win.eventdata.subjectUserSid" negate="yes">^S-1-5-18$|^S-1-5-19$|^S-1-5-20$</field>
-        <field name="win.eventdata.subjectUserName" type="pcre2" negate="yes">^(?:SYSTEM|LOCAL SERVICE|NETWORK SERVICE|.*?\$$)$</field>
-        <!-- Filtra apenas quando a conta for administrativa (adm.* ou Administrator) -->
+        <field name="win.eventdata.subjectUserName" type="pcre2" negate="yes">.*?\$$</field>
+        <!-- Filtra apenas quando a conta for administrativa -->
         <field name="win.eventdata.subjectUserName" type="pcre2">(?i)^(?:adm\..+|[A|a]dministrator|[A|a]dministrador)$</field>
         <description>Auditoria: Atribuicao de privilegios de administrador para '$(win.eventdata.subjectUserName)' em '$(win.system.computer)'.</description>
         <options>no_full_log</options>
