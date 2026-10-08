@@ -1,0 +1,67 @@
+<group name="windows,monitoramento,">
+
+  <rule id="801001" level="12">
+    <description>Folder Audit Permission - Object changed</description>
+    <options>no_full_log</options>
+    <field name="win.system.eventID">4670</field>
+  </rule>
+
+  <rule id="801002" level="15">
+    <if_sid>61102</if_sid>
+    <options>no_full_log</options>
+    <description>Error on Servers (Windows)</description>
+    <field name="win.system.computer" type="pcre2">(?i)WSR\-[0-9]{3}\-[0-9]{3}\-[0-9]{3}.*</field>
+  </rule>
+
+  <!--
+  <rule id="801003" level="15">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID">^4648$</field>
+
+    <field name="win.eventdata.subjectUserName" negate="yes">\$$</field>
+    <field name="win.eventdata.targetUserName" negate="yes">^[D|d]esenvolvimento</field>
+    <field name="win.eventdata.targetServerName" negate="yes">^localhost$|^127\.0\.0\.1$</field>
+    <field name="win.eventdata.processName" negate="yes">svchost\.exe$</field>
+    <field name="win.eventdata.processName" negate="yes">Microsoft\.AAD\.BrokerPlugin\.exe$</field>
+
+    <description>Credenciais cruzadas por '$(win.eventdata.subjectUserName)' usando conta '$(win.eventdata.targetUserName)' com destino a '$(win.eventdata.targetServerName)'.</description>
+    <options>no_full_log</options>
+    <mitre>
+      <id>T1078</id>
+      <id>T1134</id>
+    </mitre>
+    <group>authentication_success,privileged_access,windows,</group>
+  </rule>
+  -->
+
+  <rule id="801003" level="5">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID">^4648$</field>
+    <!-- Caso contas que começam com adm. ou o Administrador local ou sejam hosts-->
+    <field name="win.eventdata.subjectUserName" negate="yes">\$$</field>
+    <field name="win.eventdata.targetUserName" type="pcre2">(?i)^(?:adm\..+|[A|a]dministrator|[A|a]dministrador|[D|d]esenvolvimento)$</field>
+    <description>Auditoria: Elevacao de privilegio do usuario '$(win.eventdata.subjectUserName)' usando conta administrativa '$(win.eventdata.targetUserName)' com destino a '$(win.eventdata.targetServerName)'.</description>
+    <options>no_full_log</options>
+    <group>authentication_success,privileged_access,elevation_audit,</group>
+  </rule>
+
+  <rule id="801004" level="15">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID">^4648$</field>
+    <!-- Descarta contas de máquina ($) e serviços nativos -->
+    <field name="win.eventdata.subjectUserName" negate="yes">\$$</field>
+    <field name="win.eventdata.targetUserName" negate="yes">^[D|d]esenvolvimento</field>
+    <field name="win.eventdata.targetServerName" negate="yes">^localhost$|^127\.0\.0\.1$</field>
+    <field name="win.eventdata.processName" negate="yes">svchost\.exe$</field>
+    <field name="win.eventdata.processName" negate="yes">(?i)Microsoft\.AAD\.BrokerPlugin\.exe$|taskhostw\.exe$</field>
+    <!-- Descarta quando o alvo for conta administrativa padrão (cai na 801003) -->
+    <field name="win.eventdata.targetUserName" type="pcre2" negate="yes">(?i)^(?:adm\..+|[A|a]dministrator|[A|a]dministrador|[D|d]esenvolvimento)$</field>
+    <description>ALERTA CRITICO: Suspeita de Compartilhamento de Credenciais - Usuario '$(win.eventdata.subjectUserName)' usando conta comum '$(win.eventdata.targetUserName)' com destino a '$(win.eventdata.targetServerName)'.</description>
+     <mitre>
+        <id>T1078</id>
+        <id>T1134</id>
+     </mitre>
+    <group>authentication_success,account_sharing,security_incident,</group>
+  </rule>
+
+</group>
