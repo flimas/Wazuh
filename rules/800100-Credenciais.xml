@@ -13,26 +13,31 @@
         <field name="win.system.computer" type="pcre2">(?i)WSR\-[0-9]{3}\-[0-9]{3}\-[0-9]{3}.*</field>
       </rule>
 
-      <!-- 801003: Elevação via Credenciais Explícitas (Event ID 4648 - RunAs / Network) -->
+      <!-- 801003: Auditoria de Elevação de Privilégio (Quem chamou Quem) -->
       <rule id="801003" level="5">
         <if_sid>60103</if_sid>
         <field name="win.system.eventID">^4648$</field>
-        <!-- Descarta contas de máquina, SYSTEM e tarefas agendadas em localhost -->
+
+        <!-- Descarta contas de máquina e SYSTEM -->
         <field name="win.eventdata.subjectUserSid" negate="yes">^S-1-5-18$</field>
         <field name="win.eventdata.subjectUserName" type="pcre2" negate="yes">.*?\$$</field>
-        <field name="win.eventdata.targetServerName" negate="yes">^localhost$|^127\.0\.0\.1$</field>
+
+        <!-- Descarta serviços normais em background, mas PERMITE explicitamente o UAC (consent.exe) e runas -->
+        <!-- Se o processo for svchost.exe em localhost, descarta (tarefas agendadas locais de sistema) -->
         <field name="win.eventdata.processName" negate="yes">svchost\.exe$</field>
-        <!-- Alvo deve ser conta administrativa -->
-        <field name="win.eventdata.targetUserName" type="pcre2">(?i)^(?:adm\..+|[A|a]dministrator|[A|a]dministrador|[D|d]esenvolvimento)$</field>
-        <description>Auditoria: Elevacao de privilegio do usuario '$(win.eventdata.subjectUserName)' usando conta administrativa '$(win.eventdata.targetUserName)' com destino a '$(win.eventdata.targetServerName)'.</description>
+
+        <!-- Conta alvo DEVE ser administrativa -->
+        <field name="win.eventdata.targetUserName" type="pcre2">(?i)^(?:adm\..+|[A|a]dministrator|[A|a]dministrador)$</field>
+
+        <description>Auditoria UAC: Usuario '$(win.eventdata.subjectUserName)' solicitou elevacao para '$(win.eventdata.targetUserName)' via '$(win.eventdata.processName)' em '$(win.system.computer)'.</description>
         <options>no_full_log</options>
         <mitre>
           <id>T1078</id>
-          <id>T1134</id>
+          <id>T1548.002</id>
         </mitre>
         <group>authentication_success,privileged_access,elevation_audit,</group>
       </rule>
-
+      
       <!-- 801004: Suspeita de Compartilhamento de Credenciais (Event ID 4648) -->
       <rule id="801004" level="15">
         <if_sid>60103</if_sid>
